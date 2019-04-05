@@ -7,14 +7,13 @@ NEPTUNE_IMAGE="$3"
 MUXPI="$HOME/muxpi"
 IMAGES="$MUXPI/images"
 
-
 rm -rf $IMAGES
 
 VARIANT_MINIMAL="core-image-pelux-minimal-dev"
-URL_MINIMAL="https://pelux.io/jenkins/job/pelux-manifests_NIGHTLY/lastSuccessfulBuild/artifact/artifacts_$ARCHVARIANT/$VARIANT_MINIMAL*/*zip*/artifacts_$ARCHVARIANT.zip"
+URL_MINIMAL="https://pelux.io/jenkins/job/pelux-manifests_NIGHTLY/321/artifact/artifacts_$ARCHVARIANT/$VARIANT_MINIMAL*/*zip*/artifacts_$ARCHVARIANT.zip"
 
 VARIANT_NEPTUNE="core-image-pelux-qtauto-neptune-dev"
-URL_NEPTUNE="https://pelux.io/jenkins/job/pelux-manifests_NIGHTLY/lastSuccessfulBuild/artifact/artifacts_$ARCHVARIANT-qtauto/$VARIANT_NEPTUNE*/*zip*/artifacts_$ARCHVARIANT-qtauto.zip"
+URL_NEPTUNE="https://pelux.io/jenkins/job/pelux-manifests_NIGHTLY/321/artifact/artifacts_$ARCHVARIANT-qtauto/$VARIANT_NEPTUNE*/*zip*/artifacts_$ARCHVARIANT-qtauto.zip"
 
 VARIANT=""
 URL=""
@@ -54,8 +53,15 @@ if [ $? == 0 ]; then
 fi
 
 echo "{\"${VARIANT}\":\"\"}" > $MUXPI/map.json
-echo "Json map is ready. Sending the artifacts to muxpi..."
+echo "Json map is ready"
 
-scp -i ~/.ssh/build_slave_key $IMAGES/$VARIANT.tar.gz muxpi@172.31.173.165:~/artifacts
-scp -i ~/.ssh/build_slave_key $MUXPI/map.json muxpi@172.31.173.165:~/artifacts
-ssh -i ~/.ssh/build_slave_key muxpi@172.31.173.165 "~/scripts/set-up-image-NUC.sh $DUT_IP $VARIANT.tar.gz $NEPTUNE_IMAGE"
+echo "Flashing muxpi for \"$ARCHVARIANT\""
+if [ "$ARCHVARIANT" == intel ]; then
+   scp -i ~/.ssh/build_slave_key $IMAGES/$VARIANT.tar.gz muxpi@172.31.173.165:~/artifacts
+   scp -i ~/.ssh/build_slave_key $MUXPI/map.json muxpi@172.31.173.165:~/artifacts
+   ssh -i ~/.ssh/build_slave_key muxpi@172.31.173.165 "~/scripts/set-up-image-NUC.sh $DUT_IP $VARIANT.tar.gz $NEPTUNE_IMAGE"
+elif [ "$ARCHVARIANT" == rpi ]; then
+   scp -i ~/.ssh/build_slave_key $IMAGES/$VARIANT.tar.gz muxpi@172.31.173.128:~/artifacts
+   scp -i ~/.ssh/build_slave_key $MUXPI/map.json muxpi@172.31.173.128:~/artifacts
+   ssh -i ~/.ssh/build_slave_key muxpi@172.31.173.128 "~/scripts/set-up-image.sh $VARIANT.tar.gz $NEPTUNE_IMAGE"
+fi
